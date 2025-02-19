@@ -43,7 +43,7 @@ For more info on Sheet Swiper, see [its GitHub page](https://github.com/sillsdev
 
 ---
 
-## Sample Files
+## Sample Files ##
 
 To help you test:
 
@@ -57,9 +57,9 @@ To help you test:
 
 ---
 
-## Installation / Usage
+## Installation / Usage ##
 
-### 1. Using the Standalone `.exe`
+### 1. Using the Standalone `.exe` ###
 
 1. [Download the `.exe` from Releases](../../releases) (if provided).
 2. Place it anywhere on your computer.
@@ -72,7 +72,7 @@ To help you test:
 
 No separate Python installation is required.
 
-### 2. Using Python Source
+### 2. Using Python Source ###
 
 1. **Clone or download** this repository:
    ```bash
@@ -87,9 +87,9 @@ No separate Python installation is required.
    ```bash
    python sfm2sheet.py
 
-6. The GUI will appear, allowing you to open an SFM file and preview/export data.
+4. The GUI will appear, allowing you to open an SFM file and preview/export data.
 
-###How It Works###
+### How It Works ###
 1. **Parse SFM**
 The script reads each line of the SFM file, deciding if it’s an entry-level or sense-level marker, storing repeated markers in lists.
 2. **Flatten Data**
@@ -97,23 +97,25 @@ Multiple senses become additional columns; repeated markers become repeated colu
 3. **Preview & Save**
 You can see the first 10 rows in the Review tab and save the entire dataset to .xlsx or .csv.
 
-###Building Your Own .exe###
+### Building Your Own .exe ###
 If you modify the code and want to create a new standalone .exe:
 
 1. **Install PyInstaller:**
- ```bash   
-pip install pyinstaller
+    ```bash   
+   pip install pyinstaller
+
 2. **Build (including your logo file):**
- ```bash
-python -m PyInstaller --onefile --windowed sfm2sheet.py --add-data "SFM2Sheet-Converter_logo.png;."
+    ```bash
+   python -m PyInstaller --onefile --windowed sfm2sheet.py --add-data "SFM2Sheet-Converter_logo.png;."
+
 3. The output appears in the dist/ folder as sfm2sheet.exe (or similar).
 
-## Troubleshooting
+## Troubleshooting ##
 
-### Logo Not Showing
+### Logo Not Showing ###
 Ensure you used `--add-data` in PyInstaller and that the code references the image with a helper function like `resource_path("SFM2Sheet-Converter_logo.png")`.
 
-### No Data in Review
+### No Data in Review ###
 Confirm your SFM file has lines starting with `\marker`. Blank lines or lines without `\` are ignored.
 
 ### Export Fails
@@ -121,18 +123,23 @@ Make sure you have permission to write to the selected folder and that no antivi
 
 ---
 
-## Contributing
+## Contributing ##
 
 1. **Fork** the repository and create a new branch:
-   ```bash
-   git checkout -b feature/myFeature
-
+      ```bash
+      git checkout -b feature/myFeature
+   
 2. Commit your changes:
-  ```bash
-git commit -am 'Add a new feature'
+     ```bash
+      git commit -am 'Add a new feature'
 
 3. **Push** to your fork:
-  ```bash
-git push origin feature/myFeature
+     ```bash
+      git push origin feature/myFeature
 
 4. Create a Pull Request on the main repo.
+
+## Developer ##
+Developed by **[Maaz Ahmad Shaikh](maazahmadshaikh.github.io)** for converting FLEx or SFM-based lexicon files into spreadsheet form.
+
+**Special Mention**: Sheet Swiper by SIL International, which does the reverse conversion (spreadsheets → SFM).
