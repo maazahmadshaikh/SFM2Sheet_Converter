@@ -140,6 +140,6 @@ Make sure you have permission to write to the selected folder and that no antivi
 4. Create a Pull Request on the main repo.
 
 ## Developer ##
-Developed by **[Maaz Ahmad Shaikh](https://maazahmadshaikh.github.io/))** for converting FLEx or SFM-based lexicon files into spreadsheet form.
+Developed by **[Maaz Ahmad Shaikh](https://maazahmadshaikh.github.io/)** for converting FLEx or SFM-based lexicon files into spreadsheet form.
 
 **Special Mention**: Sheet Swiper by SIL International, which does the reverse conversion (spreadsheets → SFM).
