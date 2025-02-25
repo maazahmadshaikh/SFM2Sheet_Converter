@@ -10,6 +10,592 @@ import json
 import os
 import tkinter.font as tkfont
 from PIL import Image, ImageTk
+import xml.etree.ElementTree as ET
+
+
+# Embed the XML content as a multi-line string.
+MDF_XML = r"""<!--=====================================================================
+Mapping file to import MDF standard format files into FieldWorks or some other application.
+See documentation in Lexicon Import.htm for information on customizing/using this file.
+=====================================================================-->
+<sfmMapping>
+
+<!--=====================================================================
+Global Settings
+=====================================================================-->
+<settings>
+<meaning app="fw.sil.org"/>
+</settings>
+
+<!--=====================================================================
+Language Definitions
+=====================================================================-->
+<languages>
+<langDef id="English" xml:lang="en"/>
+<langDef id="Vernacular" xml:lang ="Vernacular"/>
+<langDef id="Regional" xml:lang ="ignore"/>
+<langDef id="National" xml:lang ="ignore"/>
+</languages>
+
+<!--=====================================================================
+Level Hierarchy
+=====================================================================-->
+<hierarchy>
+<level name="Entry" partOf="records" beginFields="lx" additionalFields="a bw ce cf cn cr dt hm lc mn mr ph" multiFields="a bw ce cf cn cr lc mn mr ph"/>
+<level name="Subentry" partOf="Entry" beginFields="se" additionalFields="bw ce cf cn cr mn mr ph" multiFields="bw ce cf cn cr mn mr ph"/>
+<level name="Sense" partOf="Entry Subentry" beginFields="ge ps sn" additionalFields="1d 1e 1i 1p 1s 2d 2p 2s 3d 3p 3s 4d 4p 4s an bb de dn dr dv ee en er ev exm gn gr gv lt na nd ng np nq ns nt oe on or ov pc pd pde pdl pdn pdr pdv pl pn rd re rn rr sc sg so st sy tb ue un ur uv we wn wr" multiFields="1d 1e 1i 1p 1s 2d 2p 2s 3d 3p 3s 4d 4p 4s an bb de dn dr dv ee en er ev exm ge gn gr gv is lt na nd ng np nq ns nt oe on or ov pc pd pde pdl pdn pdr pdv pl pn rd re rn rr sc sd sg so st sy tb th ue un ur uv we wn wr"/>
+<level name="Etymology" partOf="Entry Subentry" beginFields="et" additionalFields="ec eg es" multiFields="ec eg"/>
+<level name="Example" partOf="Sense" beginFields="rf xv" additionalFields="" multiFields=""/>
+<level name="ExampleTranslation" partOf="Example" beginFields="xe" additionalFields="xn xr" multiFields="xn xr"/>
+<level name="ExtendedNote" partOf="Sense" beginFields="ent end" additionalFields="" multiFields="end"/>
+<level name="ExtendedNoteExample" partOf="ExtendedNote" beginFields="enex" additionalFields="" multiFields=""/>
+<level name="ExtendedNoteExampleTranslation" partOf="ExtendedNoteExample" beginFields="entr" additionalFields="" multiFields=""/>
+<level name="Function" partOf="Sense" beginFields="lf" additionalFields="lv"/>
+<level name="SemanticDomain" partOf="Sense" beginFields="is" additionalFields="sd th"/>
+<level name="Picture" partOf="Sense" beginFields="pc" additionalFields=""/>
+<level name="Pronunciation" partOf="Entry Subentry" beginFields="ph" additionalFields=""/>
+<level name="Variant" partOf="Entry Subentry" beginFields="va" additionalFields="ve vn vr"/>
+</hierarchy>
+
+<!--=====================================================================
+Field Descriptions
+=====================================================================-->
+<fieldDescriptions>
+<field sfm="1d" name="First dual" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="1e" name="First plural exclusive" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="1i" name="First plural inclusive" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="1p" name="First plural" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="1s" name="First singular" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="2d" name="Second dual" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="2p" name="Second plural" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="2s" name="Second singular" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="3d" name="Third dual" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="3p" name="Third plural" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="3s" name="Third singular" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="4d" name="Non-animate dual" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="4p" name="Non-animate plural" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="4s" name="Non-animate singular" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="a" name="Allomorph" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="allo"/>
+</field>
+<field sfm="an" name="Antonym Lexical Relation" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="lxrel" funcWS="en" func="Antonym"/>
+</field>
+<field sfm="bb" name="Bibliography" type="string" lang="English">
+<meaning app="fw.sil.org" id="sbib"/>
+</field>
+<field sfm="bw" name="Borrowed word (language)" type="string" lang="English">
+<meaning app="fw.sil.org" id="etsl"/>
+</field>
+<field sfm="ce" name="Cross-ref. gloss (English)" type="string" lang="English">
+<meaning app="fw.sil.org" id="eires"/>
+</field>
+<field sfm="cf" name="Compare Cross Reference" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="cref" funcWS="en" func="Compare"/>
+</field>
+<field sfm="cn" name="Cross-ref. gloss (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="eires"/>
+</field>
+<field sfm="cr" name="Cross-ref. gloss (regional)" type="string" lang="National">
+<meaning app="fw.sil.org" id="eires"/>
+</field>
+<field sfm="de" name="Definition" type="string" lang="English">
+<meaning app="fw.sil.org" id="def"/>
+</field>
+<field sfm="dn" name="Definition" type="string" lang="National">
+<meaning app="fw.sil.org" id="def"/>
+</field>
+<field sfm="dr" name="Definition" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="def"/>
+</field>
+<field sfm="dt" name="Date Modified" type="date" lang="English">
+<meaning app="fw.sil.org" id="mod"/>
+</field>
+<field sfm="dv" name="Definition" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="def"/>
+</field>
+<field sfm="ec" name="Etymology Comment" type="string" lang="English">
+<meaning app="fw.sil.org" id="etc"/>
+</field>
+<field sfm="ee" name="Encyclopedic Information" type="string" lang="English">
+<meaning app="fw.sil.org" id="enc"/>
+</field>
+<field sfm="eg" name="Etymology Gloss" type="string" lang="English">
+<meaning app="fw.sil.org" id="etg"/>
+</field>
+<field sfm="en" name="Encyclopedic Information" type="string" lang="National">
+<meaning app="fw.sil.org" id="enc"/>
+</field>
+<field sfm="end" name="Extended Note Discussion" type="string" lang="English">
+<meaning app="fw.sil.org" id="end"/>
+</field>
+<field sfm="ent" name="Extended Note Type" type="string" lang="English">
+<meaning app="fw.sil.org" id="ent"/>
+</field>
+<field sfm="enex" name="Extended Note Example" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="enex"/>
+</field>
+<field sfm="entr" name="Extended Note Example Translation" type="string" lang="English">
+<meaning app="fw.sil.org" id="entr"/>
+</field>
+<field sfm="er" name="Encyclopedic Information" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="enc"/>
+</field>
+<field sfm="es" name="Etymology Source" type="string" lang="English">
+<meaning app="fw.sil.org" id="ets"/>
+</field>
+<field sfm="et" name="Etymology (proto form)" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="etf"/>
+</field>
+<field sfm="ev" name="Encyclopedic Information" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="enc"/>
+</field>
+<field sfm="exm" name="Exemplar" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="exm"/>
+</field>
+<field sfm="ge" name="Gloss" type="string" lang="English">
+<meaning app="fw.sil.org" id="glos"/>
+</field>
+<field sfm="gn" name="Gloss" type="string" lang="National">
+<meaning app="fw.sil.org" id="glos"/>
+</field>
+<field sfm="gr" name="Gloss" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="glos"/>
+</field>
+<field sfm="gv" name="Gloss" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="glos"/>
+</field>
+<field sfm="hm" name="Homonym number" type="integer" lang="English">
+<meaning app="fw.sil.org" id="hom"/>
+</field>
+<field sfm="is" name="Semantic Domain" type="string" lang="English" abbr="true">
+<meaning app="fw.sil.org" id="sem"/>
+</field>
+<field sfm="lc" name="Citation Form" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="cit"/>
+</field>
+<field sfm="le" name="Lexical function gloss (English)" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="lf" name="Lexical Function" type="string" lang="English" abbr="true">
+<meaning app="fw.sil.org" id="func"/>
+</field>
+<!--field sfm="lf" name="Lexical Function and Lexeme" type="string" lang="Vernacular" abbr="true">
+<meaning app="fw.sil.org" id="funold" funcWS="en"/>
+</field-->
+<field sfm="ln" name="Lexical function gloss (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="lr" name="Lexical function gloss (regional)" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="lt" name="Literally" type="string" lang="English">
+<meaning app="fw.sil.org" id="litm"/>
+</field>
+<field sfm="lv" name="Lexical Function Lexeme" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="funlex"/>
+</field>
+<field sfm="lx" name="Lexeme" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="lex"/>
+</field>
+<field sfm="mn" name="Main Entry Reference" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="meref"/>
+</field>
+<field sfm="mr" name="Morphology" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="eires"/>
+</field>
+<field sfm="na" name="Anthro  Note" type="string" lang="English">
+<meaning app="fw.sil.org" id="anote"/>
+</field>
+<field sfm="nd" name="Discourse Note" type="string" lang="English">
+<meaning app="fw.sil.org" id="dnote"/>
+</field>
+<field sfm="ng" name="GrammarNote" type="string" lang="English">
+<meaning app="fw.sil.org" id="grnote"/>
+</field>
+<field sfm="np" name="Phonology Note" type="string" lang="English">
+<meaning app="fw.sil.org" id="pnote"/>
+</field>
+<field sfm="nq" name="Notes (questions)" type="string" lang="English">
+<meaning app="fw.sil.org" id="gnote"/>
+</field>
+<field sfm="ns" name="Sociolinguistics Note" type="string" lang="English">
+<meaning app="fw.sil.org" id="slnote"/>
+</field>
+<field sfm="nt" name="General Note" type="string" lang="English">
+<meaning app="fw.sil.org" id="gnote"/>
+</field>
+<field sfm="oe" name="Restrictions" type="string" lang="English">
+<meaning app="fw.sil.org" id="srest"/>
+</field>
+<field sfm="on" name="Restrictions" type="string" lang="National">
+<meaning app="fw.sil.org" id="srest"/>
+</field>
+<field sfm="or" name="Restrictions" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="srest"/>
+</field>
+<field sfm="ov" name="Restrictions" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="srest"/>
+</field>
+<field sfm="pc" name="Picture" type="string" lang="English">
+<meaning app="fw.sil.org" id="picf"/>
+</field>
+<field sfm="pd" name="Paradigm" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pde" name="Paradigm form gloss (English)" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pdl" name="Paradigm label" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pdn" name="Paradigm form gloss (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pdr" name="Paradigm form gloss (regional)" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pdv" name="Paradigm form" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="ph" name="Phonetic form" type="string" lang="phonetic">
+<meaning app="fw.sil.org" id="prnf"/>
+</field>
+<field sfm="pl" name="Plural form" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="pn" name="Part of speech (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="ps" name="Part of Speech" type="string" lang="English" abbr="true">
+<meaning app="fw.sil.org" id="pos"/>
+</field>
+<field sfm="rd" name="Reduplication form(s)" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="re" name="Reversal" type="string" lang="English">
+<meaning app="fw.sil.org" id="rev"/>
+</field>
+<field sfm="rf" name="Reference of Example Sentence" type="string" lang="English">
+<meaning app="fw.sil.org" id="ref"/>
+</field>
+<field sfm="rn" name="Reversal" type="string" lang="National">
+<meaning app="fw.sil.org" id="rev"/>
+</field>
+<field sfm="rr" name="Reversal" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="rev"/>
+</field>
+<field sfm="sc" name="Scientific Name" type="string" lang="English">
+<meaning app="fw.sil.org" id="sci"/>
+</field>
+<field sfm="sd" name="Semantic Domain English Name" type="string" lang="English">
+<meaning app="fw.sil.org" id="seme"/>
+</field>
+<field sfm="se" name="Subentry" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sub" funcWS="en" func="Unspecified Complex Form"/>
+</field>
+<field sfm="sg" name="Singular form" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="sn" name="Sense Number" type="string" lang="English">
+<meaning app="fw.sil.org" id="sn"/>
+</field>
+<field sfm="so" name="Source" type="string" lang="English">
+<meaning app="fw.sil.org" id="src"/>
+</field>
+<field sfm="st" name="Status" type="string" lang="English">
+<meaning app="fw.sil.org" id="stat"/>
+</field>
+<field sfm="sy" name="Synonym Lexical Relation" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="lxrel" funcWS="en" func="Synonyms"/>
+</field>
+<field sfm="tb" name="Table" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="th" name="Semantic Domain Vernacular Name" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="semv"/>
+</field>
+<field sfm="ue" name="Usage" type="string" lang="English">
+<meaning app="fw.sil.org" id="utyp"/>
+</field>
+<field sfm="un" name="Usage (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="ur" name="Usage (regional)" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="uv" name="Usage (vernacular)" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="va" name="Variant" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="var" funcWS="en" func="Unspecified Variant" />
+</field>
+<field sfm="ve" name="Variant Comment" type="string" lang="English">
+<meaning app="fw.sil.org" id="varc"/>
+</field>
+<field sfm="vn" name="Variant Comment" type="string" lang="National">
+<meaning app="fw.sil.org" id="varc"/>
+</field>
+<field sfm="vr" name="Variant Comment" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="varc"/>
+</field>
+<field sfm="we" name="Word-level gloss (English)" type="string" lang="English">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="wn" name="Word-level gloss (national)" type="string" lang="National">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="wr" name="Word-level gloss (regional)" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="sires"/>
+</field>
+<field sfm="xe" name=" Translation of Example Sentence" type="string" lang="English">
+<meaning app="fw.sil.org" id="trans"/>
+</field>
+<field sfm="xn" name="Translation of Example Sentence" type="string" lang="National">
+<meaning app="fw.sil.org" id="trans"/>
+</field>
+<field sfm="xr" name="Translation of Example Sentence" type="string" lang="Regional">
+<meaning app="fw.sil.org" id="trans"/>
+</field>
+<field sfm="xv" name="Example Sentence in Vernacular" type="string" lang="Vernacular">
+<meaning app="fw.sil.org" id="sent"/>
+</field>
+</fieldDescriptions>
+
+<!--=====================================================================
+In Field Markers (inline markers)
+=====================================================================-->
+<inFieldMarkers>
+	<!-- <ifm element="Remove" begin="|xx" end="*|xx" ignore="true" lang="Vernacular" style="Emphasized Text"/> -->
+</inFieldMarkers>
+
+</sfmMapping>
+"""
+
+# --------------------------------------------------------------------------
+# 2. Helper function: Load the MDF hierarchy from the XML string.
+# --------------------------------------------------------------------------
+def load_hierarchy_from_string(xml_string):
+    """
+    Parse the MDF XML string and return a list of levels,
+    each represented as a dictionary with keys:
+      - name
+      - beginFields (a list)
+      - additionalFields (a list)
+      - multiFields (a list)
+      - partOf (a list)
+    """
+    tree = ET.ElementTree(ET.fromstring(xml_string))
+    root_xml = tree.getroot()
+    hierarchy = []
+    hierarchy_xml = root_xml.find('hierarchy')
+    if hierarchy_xml is not None:
+        for level in hierarchy_xml.findall('level'):
+            level_info = {
+                'name': level.get('name'),
+                'beginFields': level.get('beginFields', '').split(),
+                'additionalFields': level.get('additionalFields', '').split(),
+                'multiFields': level.get('multiFields', '').split(),
+                'partOf': level.get('partOf', '').split()
+            }
+            hierarchy.append(level_info)
+    return hierarchy
+
+# Load the MDF hierarchy from the embedded XML.
+mdf_hierarchy = load_hierarchy_from_string(MDF_XML)
+
+# --------------------------------------------------------------------------
+# 3. Build a marker-to-level map from the MDF hierarchy.
+# --------------------------------------------------------------------------
+def build_marker_level_map(hierarchy):
+    """
+    Given the hierarchy from the MDF XML mapping file,
+    returns a dictionary mapping each marker (with a leading "\")
+    to its level (e.g., "Entry", "Sense", etc.).
+    """
+    marker_map = {}
+    for level in hierarchy:
+        level_name = level.get('name', 'Entry')
+        for field in level.get('beginFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+        for field in level.get('additionalFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+        for field in level.get('multiFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+    return marker_map
+
+# Build the marker-level map.
+marker_level_map = build_marker_level_map(mdf_hierarchy)
+
+# --------------------------------------------------------------------------
+# 4. Build level field sets from the hierarchy (for determining begin markers).
+# --------------------------------------------------------------------------
+def build_level_field_sets(hierarchy):
+    """
+    Create a dictionary mapping each level to its sets of fields.
+    """
+    level_field = {}
+    for level in hierarchy:
+        name = level['name']
+        level_field[name] = {
+            "begin": set(level.get('beginFields', [])),
+            "additional": set(level.get('additionalFields', [])),
+            "multi": set(level.get('multiFields', []))
+        }
+    return level_field
+
+level_fields = build_level_field_sets(mdf_hierarchy)
+
+# --------------------------------------------------------------------------
+# 2. Helper function: Load the MDF hierarchy from the XML string.
+# --------------------------------------------------------------------------
+def load_hierarchy_from_string(xml_string):
+    """
+    Parse the MDF XML string and return a list of levels,
+    each represented as a dictionary with keys:
+      - name
+      - beginFields (a list)
+      - additionalFields (a list)
+      - multiFields (a list)
+      - partOf (a list)
+    """
+    tree = ET.ElementTree(ET.fromstring(xml_string))
+    root_xml = tree.getroot()
+    hierarchy = []
+    hierarchy_xml = root_xml.find('hierarchy')
+    if hierarchy_xml is not None:
+        for level in hierarchy_xml.findall('level'):
+            level_info = {
+                'name': level.get('name'),
+                'beginFields': level.get('beginFields', '').split(),
+                'additionalFields': level.get('additionalFields', '').split(),
+                'multiFields': level.get('multiFields', '').split(),
+                'partOf': level.get('partOf', '').split()
+            }
+            hierarchy.append(level_info)
+    return hierarchy
+
+# Load the MDF hierarchy from the embedded XML.
+mdf_hierarchy = load_hierarchy_from_string(MDF_XML)
+
+# --------------------------------------------------------------------------
+# 3. Build a marker-to-level map from the MDF hierarchy.
+# --------------------------------------------------------------------------
+def build_marker_level_map(hierarchy):
+    """
+    Given the hierarchy from the MDF XML mapping file,
+    returns a dictionary mapping each marker (with a leading "\")
+    to its level (e.g., "Entry", "Sense", etc.).
+    """
+    marker_map = {}
+    for level in hierarchy:
+        level_name = level.get('name', 'Entry')
+        for field in level.get('beginFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+        for field in level.get('additionalFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+        for field in level.get('multiFields', []):
+            if field:
+                marker_map["\\" + field] = level_name
+    return marker_map
+
+# Build the marker-level map.
+marker_level_map = build_marker_level_map(mdf_hierarchy)
+
+# --------------------------------------------------------------------------
+# 4. Build level field sets from the hierarchy (for determining begin markers).
+# --------------------------------------------------------------------------
+def build_level_field_sets(hierarchy):
+    """
+    Create a dictionary mapping each level to its sets of fields.
+    """
+    level_field = {}
+    for level in hierarchy:
+        name = level['name']
+        level_field[name] = {
+            "begin": set(level.get('beginFields', [])),
+            "additional": set(level.get('additionalFields', [])),
+            "multi": set(level.get('multiFields', []))
+        }
+    return level_field
+
+level_fields = build_level_field_sets(mdf_hierarchy)
+
+def flatten_entries_with_hierarchy(entries):
+    """
+    Convert a list of nested entry dictionaries into a flat table,
+    but DO NOT include level prefixes like 'Entry:' or 'Sense:'.
+    
+    For each entry (lexicon record):
+      - The "Entry" level is a dictionary with markers -> list of values.
+      - Other levels (like "Sense") are stored as a list of dictionaries.
+    
+    Column headers will be just the marker name for entry-level,
+    and for sense-level we append _1, _2, etc. to handle multiple senses.
+    """
+    flattened = []
+
+    for entry in entries:
+        flat_entry = {}
+        
+        # Process the "Entry" level
+        for marker, values in entry.get("Entry", {}).items():
+            # e.g. marker == "\lx"
+            # Join multiple values with "|"
+            flat_entry[marker] = " | ".join(values)
+
+        # Process each other level (e.g. "Sense", "Subentry", etc.)
+        for level_name in entry:
+            if level_name == "Entry":
+                continue  # already handled
+            # If this level is a list of dictionaries
+            for idx, instance in enumerate(entry[level_name], start=1):
+                for marker, values in instance.items():
+                    # build a column name like "\lx_1", "\lx_2", etc.
+                    col_name = f"{marker}_{idx}"
+                    flat_entry[col_name] = " | ".join(values)
+
+        flattened.append(flat_entry)
+
+    # Convert list of dicts to a DataFrame
+    df = pd.DataFrame(flattened)
+    return df
+
+
+
 
 ###############################################################################
 # 1) Define sets for certain known markers.
@@ -18,70 +604,94 @@ from PIL import Image, ImageTk
 ###############################################################################
 
 ENTRY_MARKERS = {
-    "\\cf",  # cross reference
-    "\\ct",  # complex form type
-    "\\dt",  # date
-    "\\ec",  # etymology comment
-    "\\eg",  # etymology gloss
-    "\\es",  # etymology source language notes
-    "\\esl", # etymology source language
-    "\\et",  # etymology source language form
-    "\\hm",  # homograph number    
-    "\\lc",  # citation form
-    "\\lf",  # lexeme form
-    "\\lt",  # literally
-    "\\lv",  # lexical function lexeme
-    "\\lx",  # lexeme
-    "\\mn",  # main entry cross-reference
-    "\\ph",  # phonemic form
-    "\\se",  # subentry
-    "\\va",  # variant forms
-    "\\ve",  # variant comment English
-    "\\vn",  # variant comment National language
-    "\\vr"   # variant comment Regional language
+    "\\a",    # Allomorph
+    "\\bw",   # Borrowed word (language)
+    "\\ce",   # Cross-ref. gloss (English)
+    "\\cf",   # Cross reference
+    "\\cn",   # Cross-ref. gloss (national)
+    "\\cr",   # Cross-ref. gloss (regional)
+    "\\dt",   # Date
+    "\\ec",   # Etymology comment
+    "\\eg",   # Etymology gloss
+    "\\es",   # Etymology source language notes
+    "\\esl",  # Etymology source language
+    "\\et",   # Etymology source language form
+    "\\hm",   # Homograph number    
+    "\\lc",   # Citation form
+    "\\lf",   # Lexeme form
+    "\\lt",   # Literally
+    "\\lv",   # Lexical function lexeme
+    "\\lx",   # Lexeme
+    "\\mn",   # Main entry cross-reference
+    "\\mr",   # Morphology (additional info)
+    "\\ph",   # Phonemic form
+    "\\se",   # Subentry
+    "\\va",   # Variant forms
+    "\\ve",   # Variant comment English
+    "\\vn",   # Variant comment National language
+    "\\vr"    # Variant comment Regional language
 }
 
 SENSE_MARKERS = {
-    "\\an",  # antonym
-    "\\bb",  # bibliography
-    "\\de",  # definition English
-    "\\dn",  # definition National language
-    "\\dr",  # definition Regional language
-    "\\dv",  # definition Vernacular language
-    "\\ee",  # encyclopedic info English
-    "\\en",  # encyclopedic info National language
-    "\\er",  # encyclopedic info Regional language
-    "\\ev",  # encyclopedic info Vernacular language
-    "\\ge",  # gloss English
-    "\\gn",  # gloss National language
-    "\\gr",  # gloss Regional language
-    "\\gv",  # gloss Vernacular language
-    "\\na",  # anthropology note
-    "\\nd",  # discourse note
-    "\\ng",  # grammar note
-    "\\np",  # note pronunciation
-    "\\nq",  # questions/notes
-    "\\ns",  # sociolinguistics note
-    "\\nt",  # general note
-    "\\oe",  # restrictions English
-    "\\on",  # restrictions National language
-    "\\or",  # restrictions Regional language
-    "\\ov",  # restrictions Vernacular language
-    "\\ps",  # part of speech
-    "\\re",  # reversal English
-    "\\rf",  # reference for example sentence
-    "\\rn",  # reversal National language
-    "\\rr",  # reversal Regional language
-    "\\sc",  # scientific name
-    "\\sn",  # sense number
-    "\\so",  # source
-    "\\st",  # status
-    "\\sy",  # synonym
-    "\\ue",  # usage
-    "\\xe",  # example translation English
-    "\\xn",  # example translation National language
-    "\\xr",  # example translation Regional language
-    "\\xv"   # example sentence in Vernacular language
+    "\\an",   # Antonym
+    "\\bb",   # Bibliography
+    "\\de",   # Definition (English)
+    "\\dn",   # Definition (National)
+    "\\dr",   # Definition (Regional)
+    "\\dv",   # Definition (Vernacular)
+    "\\ee",   # Encyclopedic info (English)
+    "\\en",   # Encyclopedic info (National)
+    "\\er",   # Encyclopedic info (Regional)
+    "\\ev",   # Encyclopedic info (Vernacular)
+    "\\ge",   # Gloss (English)
+    "\\gn",   # Gloss (National)
+    "\\gr",   # Gloss (Regional)
+    "\\gv",   # Gloss (Vernacular)
+    "\\na",   # Anthropology note
+    "\\nd",   # Discourse note
+    "\\ng",   # Grammar note
+    "\\np",   # Note pronunciation
+    "\\nq",   # Questions/notes
+    "\\ns",   # Sociolinguistics note
+    "\\nt",   # General note
+    "\\oe",   # Restrictions (English)
+    "\\on",   # Restrictions (National)
+    "\\or",   # Restrictions (Regional)
+    "\\ov",   # Restrictions (Vernacular)
+    "\\ps",   # Part of speech
+    "\\re",   # Reversal (English)
+    "\\rf",   # Reference for example sentence
+    "\\rn",   # Reversal (National)
+    "\\rr",   # Reversal (Regional)
+    "\\sc",   # Scientific name
+    "\\sn",   # Sense number
+    "\\so",   # Source
+    "\\st",   # Status
+    "\\sy",   # Synonym
+    "\\ue",   # Usage
+    "\\xe",   # Example translation (English)
+    "\\xn",   # Example translation (National)
+    "\\xr",   # Example translation (Regional)
+    "\\xv",   # Example sentence (Vernacular)
+    "\\exm",  # Exemplar
+    "\\pc",   # Picture
+    "\\pd",   # Paradigm
+    "\\pde",  # Paradigm form gloss (English)
+    "\\pdl",  # Paradigm label
+    "\\pdn",  # Paradigm form gloss (National)
+    "\\pdr",  # Paradigm form gloss (Regional)
+    "\\pdv",  # Paradigm form (Vernacular)
+    "\\pl",   # Plural form
+    "\\pn",   # Part of speech (national) [if used separately]
+    "\\rd",   # Reduplication form(s)
+    "\\sg",   # Singular form
+    "\\tb",   # Table
+    "\\un",   # Usage (National)
+    "\\ur",   # Usage (Regional)
+    "\\uv",   # Usage (Vernacular)
+    "\\we",   # Word-level gloss (English)
+    "\\wn",   # Word-level gloss (National)
+    "\\wr"    # Word-level gloss (Regional)
 }
 
 ###############################################################################
@@ -90,6 +700,11 @@ SENSE_MARKERS = {
 ###############################################################################
 
 ENTRY_PREFIXES = [
+    "a",    # e.g. \a_Eng
+    "bw",   # e.g. \bw_Eng
+    "ce",   # e.g. \ce_Eng
+    "cn",   # e.g. \cn_Eng
+    "cr",   # e.g. \cr_Eng
     "ea",   # e.g. \ea_Eng, \ea_Lad (etymology preceding annotations)
     "eb",   # e.g. \eb_Eng, \eb_Lad (etymology bibliography)
     "efc",  # e.g. \efc_Eng, \efc_Lad (etymology following comments)
@@ -119,7 +734,26 @@ SENSE_PREFIXES = [
     "st",   # e.g. \st_Eng, \st_Lad (status)
     "sy",   # e.g. \sy_Eng, \sy_Lad (synonym)
     "u",    # e.g. \u_Eng, \u_Lad (usage)
-    "x"     # e.g. \x_Eng, \x_Lad (examples)
+    "x",    # e.g. \x_Eng, \x_Lad (examples)
+    "xv",   # e.g. \xv_Lad-Latn, \xv_Lad-Ucen (example sentence in Vernacular)
+    "exm",  # e.g. \exm_Eng (exemplar)
+    "pd",   # paradigm
+    "pde",  # paradigm form gloss (English)
+    "pdl",  # paradigm label
+    "pdn",  # paradigm form gloss (National)
+    "pdr",  # paradigm form gloss (Regional)
+    "pdv",  # paradigm form (Vernacular)
+    "pl",   # plural form
+    "pn",   # part of speech (national) [if used separately]
+    "rd",   # reduplication form(s)
+    "sg",   # singular form
+    "tb",   # table
+    "un",   # usage (National)
+    "ur",   # usage (Regional)
+    "uv",   # usage (Vernacular)
+    "we",   # word-level gloss (English)
+    "wn",   # word-level gloss (National)
+    "wr"    # word-level gloss (Regional)
 ]
 
 ###############################################################################
@@ -339,7 +973,6 @@ def log_message(msg):
 converted_df = None
 converted_filename = "output.xlsx"
 
-
 ###############################################################################
 # Preview
 ###############################################################################
@@ -364,6 +997,92 @@ def show_preview(df):
     for row_data in preview_data:
         preview_tree.insert("", "end", values=row_data)
 
+def parse_sfm_with_hierarchy(file_path):
+    """
+    A minimal hierarchical parser that organizes data into a nested structure:
+      {
+        "Entry": { marker -> [values], ... },
+        "Sense": [ { marker -> [values], ... }, ... ]
+      }
+
+    In this simple version:
+      - A line starting with \lx begins a new "Entry" block.
+      - A line starting with \sn (or any sense-begin marker) begins a new "Sense" block.
+      - All sense-level markers go into the current sense dictionary.
+      - All entry-level markers go into the "Entry" dictionary.
+    
+    This does NOT handle Subentries, Examples, or other levels yet.
+    Expand as needed for your MDF hierarchy.
+    """
+    entries = []
+    current_entry = None
+    current_sense = None
+
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                # Blank line => end of current entry
+                if current_entry is not None:
+                    entries.append(current_entry)
+                current_entry = None
+                current_sense = None
+                continue
+
+            # Skip lines that don't start with a backslash
+            if not line.startswith('\\'):
+                continue
+
+            # Split into marker + value
+            parts = line.split(' ', 1)
+            marker = parts[0]
+            value = parts[1] if len(parts) > 1 else ""
+
+            # If no entry started yet, create one
+            if current_entry is None:
+                current_entry = {
+                    "Entry": {},  # Dictionary for entry-level markers
+                    "Sense": []   # List of sense dictionaries
+                }
+                current_sense = None
+
+            # If we see \lx, that starts a new Entry
+            if marker == "\\lx":
+                # If there was a previous entry in progress, finalize it
+                if current_entry and (current_entry["Entry"] or current_entry["Sense"]):
+                    entries.append(current_entry)
+                current_entry = {"Entry": {}, "Sense": []}
+                current_sense = None
+                current_entry["Entry"].setdefault(marker, []).append(value)
+
+            # If we see \sn, that starts a new sense
+            elif marker == "\\sn":
+                current_sense = {marker: [value]}
+                current_entry["Sense"].append(current_sense)
+
+            else:
+                # Decide if marker is sense-level or entry-level
+                if is_sense_marker(marker):
+                    # If no sense yet, create one
+                    if not current_entry["Sense"]:
+                        current_sense = {"\\sn": ["1"]}  # default sense number
+                        current_entry["Sense"].append(current_sense)
+                    elif current_sense is None:
+                        current_sense = {}
+                        current_entry["Sense"].append(current_sense)
+
+                    current_sense.setdefault(marker, []).append(value)
+
+                else:
+                    # entry-level
+                    current_entry["Entry"].setdefault(marker, []).append(value)
+
+    # End of file: if there's an unclosed entry, add it
+    if current_entry and (current_entry["Entry"] or current_entry["Sense"]):
+        entries.append(current_entry)
+
+    return entries
+
 ###############################################################################
 # File Processing
 ###############################################################################
@@ -375,17 +1094,21 @@ def process_file(file_path):
         progress_bar.start()
         log_message(f"Started processing file: {file_path}")
 
-        time.sleep(1)  # Simulate delay
-        entries = parse_sfm(file_path)
-        df = flatten_entries(entries)
-        df.columns = [c if c.startswith("\\") else f"\\{c}" for c in df.columns]
+        time.sleep(1)  # Simulate delay (or remove if not needed)
 
+        # Use the new hierarchical parser:
+        entries = parse_sfm_with_hierarchy(file_path)
+        # Convert the nested entries into a flat DataFrame
+        df = flatten_entries_with_hierarchy(entries)
+        # (Optional) If you need to adjust headers further, do it here.
         converted_df = df
+
+        # Suggest a filename based on the input file name.
         base = os.path.splitext(os.path.basename(file_path))[0]
         converted_filename = f"{base}.xlsx"
 
         def update_ui():
-            notebook.select(review_frame)  # Switch to Review tab
+            notebook.select(review_frame)  # Switch to the Review tab
             show_preview(df)
 
         root.after(0, update_ui)
@@ -473,7 +1196,6 @@ notebook.add(convert_frame, text="Convert")
 notebook.add(review_frame, text="Review")
 notebook.pack(expand=True, fill='both')
 
-
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     if hasattr(sys, '_MEIPASS'):
@@ -482,7 +1204,7 @@ def resource_path(relative_path):
 
 # 1) Setting the window icon and single image label
 try:
-    icon_path = r"C:\Users\Maaz\Documents\PythonProjects\SFM2Sheet-Converter\images\SFM2Sheet-Converter_logo.png"
+    icon_path = resource_path("images/SFM2Sheet-Converter_logo.png")
     img_original = Image.open(icon_path)
     # Use LANCZOS for quality
     img_resized = img_original.resize((300, 200), Image.Resampling.LANCZOS)
@@ -492,10 +1214,6 @@ try:
 except Exception as e:
     print("Could not load/resize icon:", e)
     logo_img = None
-
-
-
-
 
 # Convert Tab UI
 
